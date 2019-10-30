@@ -2,6 +2,7 @@ package azurerm
 
 import (
 	"fmt"
+	"html"
 	"log"
 
 	"github.com/Azure/azure-sdk-for-go/services/apimanagement/mgmt/2018-01-01/apimanagement"
@@ -134,9 +135,15 @@ func resourceArmApiManagementAPIPolicyRead(d *schema.ResourceData, meta interfac
 	d.Set("api_name", apiName)
 
 	if properties := resp.PolicyContractProperties; properties != nil {
+		//the XML returned is HTML encoded - as such we need to decode this to match the input here
+		policyContent := ""
+		if pc := properties.PolicyContent; pc != nil {
+			policyContent = html.UnescapeString(*pc)
+		}
+
 		// when you submit an `xml_link` to the API, the API downloads this link and stores it as `xml_content`
 		// as such there is no way to set `xml_link` and we'll let Terraform handle it
-		d.Set("xml_content", properties.PolicyContent)
+		d.Set("xml_content", policyContent)
 	}
 
 	return nil
